@@ -175,15 +175,10 @@ Tambah Stok
 
 const API_URL = "https://script.google.com/macros/s/AKfycbyi-NfmxeFCFPcvqcA1r-ffqT_Ra66Rfy967oO2tVTzme8fEogif3OUvRsKLo4-Dw/exec";
 
-// codingan lain dibawah sini
-
 // ================= DATA =================
 
-let stokData =
-JSON.parse(localStorage.getItem('stokData')) || [];
-
-let produksiData =
-JSON.parse(localStorage.getItem('produksiData')) || [];
+let stokData = [];
+let produksiData = [];
 
 // ================= FORMAT RUPIAH =================
 
@@ -194,6 +189,32 @@ input.value.replace(/[^0-9]/g,'');
 
 input.value =
 'Rp' + Number(angka).toLocaleString('id-ID');
+
+}
+
+// ================= LOAD STOK =================
+
+async function loadStok(){
+
+const res =
+await fetch(API_URL + "?action=stok");
+
+stokData = await res.json();
+
+renderStok();
+
+}
+
+// ================= LOAD PRODUKSI =================
+
+async function loadProduksi(){
+
+const res =
+await fetch(API_URL + "?action=produksi");
+
+produksiData = await res.json();
+
+renderProduksi();
 
 }
 
@@ -209,9 +230,7 @@ body.innerHTML='';
 stokData.forEach(item=>{
 
 const hargaAngka =
-Number(
-item.harga.replace(/[^0-9]/g,'')
-);
+Number(item.harga);
 
 const total =
 Number(item.stok) * hargaAngka;
@@ -225,7 +244,9 @@ body.innerHTML += `
 ${Number(item.stok).toLocaleString('id-ID')} Kg
 </td>
 
-<td>${item.harga}</td>
+<td>
+Rp${hargaAngka.toLocaleString('id-ID')}
+</td>
 
 <td>
 Rp${total.toLocaleString('id-ID')}
@@ -247,7 +268,7 @@ document.getElementById('produksiBody');
 
 body.innerHTML='';
 
-produksiData.forEach(item=>{
+produksiData.reverse().forEach(item=>{
 
 body.innerHTML += `
 <tr>
@@ -256,13 +277,13 @@ body.innerHTML += `
 
 <td>${item.operator}</td>
 
-<td>${item.plan}</td>
+<td>${item.plan} Kg</td>
 
-<td>${item.actual}</td>
+<td>${item.actual} Kg</td>
 
-<td>${item.limbah}</td>
+<td>${item.limbah} Kg</td>
 
-<td>${item.pt}</td>
+<td>${item.tujuan_pt || '-'}</td>
 
 </tr>
 `;
@@ -273,7 +294,7 @@ body.innerHTML += `
 
 // ================= TAMBAH STOK =================
 
-function tambahStok(){
+async function tambahStok(){
 
 const bahan =
 document.getElementById('bahan').value;
@@ -281,8 +302,13 @@ document.getElementById('bahan').value;
 const stok =
 document.getElementById('stok').value;
 
-const harga =
+const hargaText =
 document.getElementById('harga').value;
+
+const harga =
+Number(
+hargaText.replace(/[^0-9]/g,'')
+);
 
 if(!bahan || !stok || !harga){
 
@@ -292,20 +318,31 @@ return;
 
 }
 
-stokData.push({
+// ================= SEND TO GAS =================
+
+await fetch(API_URL,{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+
+action:"tambahStok",
 
 bahan,
 stok,
 harga
 
+})
+
 });
 
-localStorage.setItem(
-'stokData',
-JSON.stringify(stokData)
-);
+// ================= REFRESH =================
 
-renderStok();
+loadStok();
 
 document.getElementById('bahan').value='';
 document.getElementById('stok').value='';
@@ -317,8 +354,8 @@ alert('Stok berhasil ditambah');
 
 // ================= LOAD =================
 
-renderStok();
-renderProduksi();
+loadStok();
+loadProduksi();
 
 </script>
 
