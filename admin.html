@@ -313,34 +313,32 @@ hargaText.replace(/[^0-9]/g,'')
 if(!bahan || !stok || !harga){
 
 alert('Lengkapi data');
-
 return;
 
 }
 
-// ================= SEND TO GAS =================
+try{
 
-await fetch(API_URL,{
+const res = await fetch(API_URL,{
 
 method:"POST",
-
-headers:{
-"Content-Type":"application/json"
-},
 
 body:JSON.stringify({
 
 action:"tambahStok",
-
-bahan,
-stok,
-harga
+bahan:bahan,
+stok:stok,
+harga:harga
 
 })
 
 });
 
-// ================= REFRESH =================
+const hasil = await res.text();
+
+console.log(hasil);
+
+alert('Stok berhasil ditambah');
 
 loadStok();
 
@@ -348,7 +346,13 @@ document.getElementById('bahan').value='';
 document.getElementById('stok').value='';
 document.getElementById('harga').value='';
 
-alert('Stok berhasil ditambah');
+}catch(err){
+
+console.log(err);
+
+alert('Gagal kirim ke server');
+
+}
 
 }
 
