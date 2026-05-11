@@ -214,34 +214,50 @@ Simpan Produksi
 
 const API_URL = "https://script.google.com/macros/s/AKfycbyi-NfmxeFCFPcvqcA1r-ffqT_Ra66Rfy967oO2tVTzme8fEogif3OUvRsKLo4-Dw/exec";
 
-// codingan lain dibawah sini
-
 // ================= DATA STOK =================
 
-let stokData =
-JSON.parse(localStorage.getItem('stokData')) || {
+let stokData = {};
+let produksiData = [];
 
-Pipil:{
-stok:500,
-harga:17000
-},
+// ================= LOAD STOK =================
 
-Menir:{
-stok:500,
-harga:10000
-},
+async function loadStok(){
 
-Konsentrat:{
-stok:300,
-harga:22000
-}
+const res = await fetch(API_URL + "?action=stok");
 
+const data = await res.json();
+
+stokData = {};
+
+data.forEach(item=>{
+
+stokData[item.bahan] = {
+stok:Number(item.stok),
+harga:Number(item.harga)
 };
 
-// ================= PRODUKSI =================
+});
 
-let produksiData =
-JSON.parse(localStorage.getItem('produksiData')) || [];
+loadBahan();
+renderStok();
+
+}
+
+loadStok();
+
+// ================= LOAD PRODUKSI =================
+
+async function loadProduksi(){
+
+const res = await fetch(API_URL + "?action=produksi");
+
+produksiData = await res.json();
+
+renderProduksi();
+
+}
+
+loadProduksi();
 
 // ================= LOAD SELECT =================
 
@@ -270,8 +286,6 @@ ${nama}
 });
 
 }
-
-loadBahan();
 
 // ================= FORMAT RUPIAH =================
 
@@ -314,8 +328,6 @@ tbody.innerHTML += `
 
 }
 
-renderStok();
-
 // ================= RENDER PRODUKSI =================
 
 function renderProduksi(){
@@ -340,7 +352,7 @@ tbody.innerHTML += `
 
 <td>${item.limbah} Kg</td>
 
-<td>${item.tujuan}</td>
+<td>${item.tujuan_pt}</td>
 
 <td>
 <span class="badge">
@@ -355,11 +367,9 @@ ${item.invoice}
 
 }
 
-renderProduksi();
-
 // ================= SUBMIT PRODUKSI =================
 
-function submitProduksi(){
+async function submitProduksi(){
 
 const tanggal =
 document.getElementById('tanggal').value;
@@ -413,15 +423,19 @@ qty1 + qty2 + qty3;
 const limbah =
 plan - actual;
 
-// ================= KURANGI STOK =================
+// ================= SEND TO GAS =================
 
-stokData[bahan1].stok -= qty1;
-stokData[bahan2].stok -= qty2;
-stokData[bahan3].stok -= qty3;
+await fetch(API_URL,{
 
-// ================= SAVE =================
+method:"POST",
 
-produksiData.push({
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+
+action:"submitProduksi",
 
 tanggal,
 operator,
@@ -439,25 +453,17 @@ plan,
 actual,
 limbah,
 
-tujuan,
+tujuan_pt:tujuan,
 invoice
+
+})
 
 });
 
-localStorage.setItem(
-'stokData',
-JSON.stringify(stokData)
-);
-
-localStorage.setItem(
-'produksiData',
-JSON.stringify(produksiData)
-);
-
 // ================= REFRESH =================
 
-renderStok();
-renderProduksi();
+loadStok();
+loadProduksi();
 
 alert('Produksi berhasil disimpan');
 
