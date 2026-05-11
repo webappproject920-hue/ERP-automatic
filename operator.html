@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Operator Produksi</title>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial;
+}
+
+body{
+background:#f4f5f7;
+padding:20px;
+color:#222;
+}
+
+.container{
+max-width:1200px;
+margin:auto;
+}
+
+.card{
+background:white;
+padding:25px;
+border-radius:20px;
+margin-bottom:20px;
+box-shadow:0 5px 15px rgba(0,0,0,0.05);
+}
+
+h1{
+margin-bottom:20px;
+}
+
+h2{
+margin-bottom:18px;
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+gap:15px;
+}
+
+input,select{
+width:100%;
+padding:14px;
+border-radius:12px;
+border:1px solid #ddd;
+font-size:15px;
+}
+
+button{
+padding:14px 18px;
+border:none;
+border-radius:12px;
+background:#e63946;
+color:white;
+font-weight:bold;
+cursor:pointer;
+margin-top:10px;
+}
+
+button:hover{
+opacity:0.9;
+}
+
+.table-wrap{
+overflow-x:auto;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:15px;
+}
+
+th,td{
+padding:14px;
+border-bottom:1px solid #eee;
+text-align:left;
+}
+
+th{
+background:#fafafa;
+}
+
+.badge{
+padding:6px 12px;
+border-radius:20px;
+background:#10b981;
+color:white;
+font-size:13px;
+display:inline-block;
+}
+
+@media(max-width:700px){
+
+body{
+padding:12px;
+}
+
+.card{
+padding:18px;
+}
+
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="card">
+
+<h1>Operator Produksi</h1>
+
+<div class="grid">
+
+<input type="date" id="tanggal">
+
+<input type="text" id="operator" placeholder="Nama Operator">
+
+<select id="bahan1"></select>
+
+<input type="number" id="qty1" placeholder="Pemakaian Bahan 1 (Kg)">
+
+<select id="bahan2"></select>
+
+<input type="number" id="qty2" placeholder="Pemakaian Bahan 2 (Kg)">
+
+<select id="bahan3"></select>
+
+<input type="number" id="qty3" placeholder="Pemakaian Bahan 3 (Kg)">
+
+<input type="number" id="actual" placeholder="Actual Produksi">
+
+<input type="text" id="tujuan" placeholder="Kirim ke PT Mana">
+
+<input type="text" id="invoice" placeholder="Nomor Invoice">
+
+</div>
+
+<button onclick="submitProduksi()">
+Simpan Produksi
+</button>
+
+</div>
+
+<div class="card">
+
+<h2>Stok Bahan Saat Ini</h2>
+
+<div class="table-wrap">
+
+<table>
+
+<thead>
+<tr>
+<th>Bahan</th>
+<th>Stok</th>
+<th>Harga/Kg</th>
+<th>Total Nilai</th>
+</tr>
+</thead>
+
+<tbody id="stokTable"></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<h2>Riwayat Produksi</h2>
+
+<div class="table-wrap">
+
+<table>
+
+<thead>
+<tr>
+<th>Tanggal</th>
+<th>Operator</th>
+<th>Plan</th>
+<th>Actual</th>
+<th>Limbah</th>
+<th>Tujuan</th>
+<th>Invoice</th>
+</tr>
+</thead>
+
+<tbody id="produksiTable"></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+// ================= DATA STOK =================
+
+let stokData =
+JSON.parse(localStorage.getItem('stokData')) || {
+
+Pipil:{
+stok:500,
+harga:17000
+},
+
+Menir:{
+stok:500,
+harga:10000
+},
+
+Konsentrat:{
+stok:300,
+harga:22000
+}
+
+};
+
+// ================= PRODUKSI =================
+
+let produksiData =
+JSON.parse(localStorage.getItem('produksiData')) || [];
+
+// ================= LOAD SELECT =================
+
+function loadBahan(){
+
+const selects = [
+document.getElementById('bahan1'),
+document.getElementById('bahan2'),
+document.getElementById('bahan3')
+];
+
+selects.forEach(select=>{
+
+select.innerHTML='';
+
+Object.keys(stokData).forEach(nama=>{
+
+select.innerHTML += `
+<option value="${nama}">
+${nama}
+</option>
+`;
+
+});
+
+});
+
+}
+
+loadBahan();
+
+// ================= FORMAT RUPIAH =================
+
+function rupiah(angka){
+return 'Rp' + Number(angka)
+.toLocaleString('id-ID');
+}
+
+// ================= RENDER STOK =================
+
+function renderStok(){
+
+const tbody =
+document.getElementById('stokTable');
+
+tbody.innerHTML='';
+
+Object.keys(stokData).forEach(nama=>{
+
+const item = stokData[nama];
+
+const total =
+item.stok * item.harga;
+
+tbody.innerHTML += `
+<tr>
+
+<td>${nama}</td>
+
+<td>${item.stok} Kg</td>
+
+<td>${rupiah(item.harga)}</td>
+
+<td>${rupiah(total)}</td>
+
+</tr>
+`;
+
+});
+
+}
+
+renderStok();
+
+// ================= RENDER PRODUKSI =================
+
+function renderProduksi(){
+
+const tbody =
+document.getElementById('produksiTable');
+
+tbody.innerHTML='';
+
+produksiData.reverse().forEach(item=>{
+
+tbody.innerHTML += `
+<tr>
+
+<td>${item.tanggal}</td>
+
+<td>${item.operator}</td>
+
+<td>${item.plan} Kg</td>
+
+<td>${item.actual} Kg</td>
+
+<td>${item.limbah} Kg</td>
+
+<td>${item.tujuan}</td>
+
+<td>
+<span class="badge">
+${item.invoice}
+</span>
+</td>
+
+</tr>
+`;
+
+});
+
+}
+
+renderProduksi();
+
+// ================= SUBMIT PRODUKSI =================
+
+function submitProduksi(){
+
+const tanggal =
+document.getElementById('tanggal').value;
+
+const operator =
+document.getElementById('operator').value;
+
+const bahan1 =
+document.getElementById('bahan1').value;
+
+const qty1 =
+Number(document.getElementById('qty1').value);
+
+const bahan2 =
+document.getElementById('bahan2').value;
+
+const qty2 =
+Number(document.getElementById('qty2').value);
+
+const bahan3 =
+document.getElementById('bahan3').value;
+
+const qty3 =
+Number(document.getElementById('qty3').value);
+
+const actual =
+Number(document.getElementById('actual').value);
+
+const tujuan =
+document.getElementById('tujuan').value;
+
+const invoice =
+document.getElementById('invoice').value;
+
+// ================= VALIDASI =================
+
+if(
+!tanggal ||
+!operator ||
+!actual
+){
+alert('Lengkapi data');
+return;
+}
+
+// ================= HITUNG =================
+
+const plan =
+qty1 + qty2 + qty3;
+
+const limbah =
+plan - actual;
+
+// ================= KURANGI STOK =================
+
+stokData[bahan1].stok -= qty1;
+stokData[bahan2].stok -= qty2;
+stokData[bahan3].stok -= qty3;
+
+// ================= SAVE =================
+
+produksiData.push({
+
+tanggal,
+operator,
+
+bahan1,
+qty1,
+
+bahan2,
+qty2,
+
+bahan3,
+qty3,
+
+plan,
+actual,
+limbah,
+
+tujuan,
+invoice
+
+});
+
+localStorage.setItem(
+'stokData',
+JSON.stringify(stokData)
+);
+
+localStorage.setItem(
+'produksiData',
+JSON.stringify(produksiData)
+);
+
+// ================= REFRESH =================
+
+renderStok();
+renderProduksi();
+
+alert('Produksi berhasil disimpan');
+
+// ================= RESET =================
+
+document.getElementById('qty1').value='';
+document.getElementById('qty2').value='';
+document.getElementById('qty3').value='';
+document.getElementById('actual').value='';
+document.getElementById('tujuan').value='';
+document.getElementById('invoice').value='';
+
+}
+
+</script>
+
+</body>
+</html>

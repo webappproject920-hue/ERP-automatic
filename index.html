@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login Produksi</title>
+
+<style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial;
+}
+
+body{
+background:#f5f6fa;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+}
+
+.login-box{
+width:100%;
+max-width:380px;
+background:white;
+padding:30px;
+border-radius:24px;
+box-shadow:0 10px 30px rgba(0,0,0,0.1);
+}
+
+h1{
+text-align:center;
+margin-bottom:25px;
+}
+
+input,select,button{
+width:100%;
+padding:14px;
+margin-bottom:15px;
+border-radius:12px;
+border:1px solid #ddd;
+}
+
+button{
+background:#e63946;
+color:white;
+font-weight:bold;
+border:none;
+cursor:pointer;
+}
+</style>
+</head>
+<body>
+
+<div class="login-box">
+<h1>Login Produksi</h1>
+
+<select id="role">
+<option value="admin">Admin</option>
+<option value="operator">Operator</option>
+</select>
+
+<input type="password" id="password" placeholder="Password">
+
+<button onclick="login()">Masuk</button>
+</div>
+
+<script>
+function login(){
+
+const role = document.getElementById('role').value;
+const pass = document.getElementById('password').value;
+
+if(role === 'admin' && pass === 'admin123'){
+window.location='admin.html';
+return;
+}
+
+if(role === 'operator' && pass === 'operator123'){
+window.location='operator.html';
+return;
+}
+
+alert('Password salah');
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Produksi</title>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial;
+}
+
+body{
+background:#f5f6fa;
+padding:20px;
+color:#222;
+}
+
+.card{
+background:white;
+padding:20px;
+border-radius:20px;
+margin-bottom:20px;
+box-shadow:0 5px 15px rgba(0,0,0,0.05);
+overflow-x:auto;
+}
+
+h2{
+margin-bottom:20px;
+}
+
+input,
+button,
+select{
+padding:12px;
+border-radius:10px;
+border:1px solid #ddd;
+margin-bottom:10px;
+width:100%;
+}
+
+button{
+background:#e63946;
+color:white;
+border:none;
+cursor:pointer;
+font-weight:bold;
+}
+
+button:hover{
+opacity:.9;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+min-width:700px;
+}
+
+th,td{
+padding:12px;
+border-bottom:1px solid #eee;
+text-align:left;
+}
+
+th{
+background:#fafafa;
+}
+
+@media(max-width:768px){
+
+body{
+padding:12px;
+}
+
+.card{
+padding:15px;
+}
+
+h2{
+font-size:22px;
+}
+
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- TAMBAH STOK -->
+
+<div class="card">
+
+<h2>Tambah Stok Bahan</h2>
+
+<input
+type="text"
+id="bahan"
+placeholder="Nama Bahan"
+>
+
+<input
+type="number"
+id="stok"
+placeholder="Jumlah Stok (Kg)"
+>
+
+<input
+type="text"
+id="harga"
+placeholder="Harga per Kg"
+oninput="formatRupiah(this)"
+>
+
+<button onclick="tambahStok()">
+Tambah Stok
+</button>
+
+</div>
+
+<!-- DATA STOK -->
+
+<div class="card">
+
+<h2>Data Stok</h2>
+
+<table>
+
+<thead>
+<tr>
+<th>Bahan</th>
+<th>Stok</th>
+<th>Harga</th>
+<th>Total</th>
+</tr>
+</thead>
+
+<tbody id="stokBody"></tbody>
+
+</table>
+
+</div>
+
+<!-- MONITORING -->
+
+<div class="card">
+
+<h2>Monitoring Produksi Operator</h2>
+
+<table>
+
+<thead>
+<tr>
+<th>Tanggal</th>
+<th>Operator</th>
+<th>Plan</th>
+<th>Actual</th>
+<th>Limbah</th>
+<th>PT Tujuan</th>
+</tr>
+</thead>
+
+<tbody id="produksiBody"></tbody>
+
+</table>
+
+</div>
+
+<script>
+
+// ================= DATA =================
+
+let stokData =
+JSON.parse(localStorage.getItem('stokData')) || [];
+
+let produksiData =
+JSON.parse(localStorage.getItem('produksiData')) || [];
+
+// ================= FORMAT RUPIAH =================
+
+function formatRupiah(input){
+
+let angka =
+input.value.replace(/[^0-9]/g,'');
+
+input.value =
+'Rp' + Number(angka).toLocaleString('id-ID');
+
+}
+
+// ================= RENDER STOK =================
+
+function renderStok(){
+
+const body =
+document.getElementById('stokBody');
+
+body.innerHTML='';
+
+stokData.forEach(item=>{
+
+const hargaAngka =
+Number(
+item.harga.replace(/[^0-9]/g,'')
+);
+
+const total =
+Number(item.stok) * hargaAngka;
+
+body.innerHTML += `
+<tr>
+
+<td>${item.bahan}</td>
+
+<td>
+${Number(item.stok).toLocaleString('id-ID')} Kg
+</td>
+
+<td>${item.harga}</td>
+
+<td>
+Rp${total.toLocaleString('id-ID')}
+</td>
+
+</tr>
+`;
+
+});
+
+}
+
+// ================= RENDER PRODUKSI =================
+
+function renderProduksi(){
+
+const body =
+document.getElementById('produksiBody');
+
+body.innerHTML='';
+
+produksiData.forEach(item=>{
+
+body.innerHTML += `
+<tr>
+
+<td>${item.tanggal}</td>
+
+<td>${item.operator}</td>
+
+<td>${item.plan}</td>
+
+<td>${item.actual}</td>
+
+<td>${item.limbah}</td>
+
+<td>${item.pt}</td>
+
+</tr>
+`;
+
+});
+
+}
+
+// ================= TAMBAH STOK =================
+
+function tambahStok(){
+
+const bahan =
+document.getElementById('bahan').value;
+
+const stok =
+document.getElementById('stok').value;
+
+const harga =
+document.getElementById('harga').value;
+
+if(!bahan || !stok || !harga){
+
+alert('Lengkapi data');
+
+return;
+
+}
+
+stokData.push({
+
+bahan,
+stok,
+harga
+
+});
+
+localStorage.setItem(
+'stokData',
+JSON.stringify(stokData)
+);
+
+renderStok();
+
+document.getElementById('bahan').value='';
+document.getElementById('stok').value='';
+document.getElementById('harga').value='';
+
+alert('Stok berhasil ditambah');
+
+}
+
+// ================= LOAD =================
+
+renderStok();
+renderProduksi();
+
+</script>
+
+</body>
+</html>
