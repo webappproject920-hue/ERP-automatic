@@ -212,6 +212,183 @@ Simpan Produksi
 
 <script>
 
+const API_URL = "https://script.google.com/macros/s/AKfycbzYAds-f8UU3ueL5zfBqviXMPH7gzMOYu9RA6sa7X7tpYftucy_dD6by7bif1fdhlkM/exec";
+
+// ================= DATA =================
+
+let stokData = {};
+let produksiData = [];
+
+// ================= LOAD STOK =================
+
+async function loadStok(){
+
+try{
+
+const res =
+await fetch(API_URL + "?action=stok");
+
+const data =
+await res.json();
+
+stokData = {};
+
+data.forEach(item=>{
+
+stokData[item.bahan] = {
+
+stok:Number(item.stok),
+harga:Number(item.harga)
+
+};
+
+});
+
+loadBahan();
+renderStok();
+
+}catch(err){
+
+console.log(err);
+
+}
+
+}
+
+// ================= LOAD PRODUKSI =================
+
+async function loadProduksi(){
+
+try{
+
+const res =
+await fetch(API_URL + "?action=produksi");
+
+produksiData =
+await res.json();
+
+renderProduksi();
+
+}catch(err){
+
+console.log(err);
+
+}
+
+}
+
+// ================= LOAD SELECT =================
+
+function loadBahan(){
+
+const selects = [
+
+document.getElementById('bahan1'),
+document.getElementById('bahan2'),
+document.getElementById('bahan3')
+
+];
+
+selects.forEach(select=>{
+
+select.innerHTML='';
+
+Object.keys(stokData).forEach(nama=>{
+
+select.innerHTML += `
+<option value="${nama}">
+${nama}
+</option>
+`;
+
+});
+
+});
+
+}
+
+// ================= FORMAT RUPIAH =================
+
+function rupiah(angka){
+
+return 'Rp' +
+Number(angka).toLocaleString('id-ID');
+
+}
+
+// ================= RENDER STOK =================
+
+function renderStok(){
+
+const tbody =
+document.getElementById('stokTable');
+
+tbody.innerHTML='';
+
+Object.keys(stokData).forEach(nama=>{
+
+const item = stokData[nama];
+
+const total =
+item.stok * item.harga;
+
+tbody.innerHTML += `
+<tr>
+
+<td>${nama}</td>
+
+<td>${item.stok} Kg</td>
+
+<td>${rupiah(item.harga)}</td>
+
+<td>${rupiah(total)}</td>
+
+</tr>
+`;
+
+});
+
+}
+
+// ================= RENDER PRODUKSI =================
+
+function renderProduksi(){
+
+const tbody =
+document.getElementById('produksiTable');
+
+tbody.innerHTML='';
+
+produksiData.reverse().forEach(item=>{
+
+tbody.innerHTML += `
+<tr>
+
+<td>${item.tanggal}</td>
+
+<td>${item.operator}</td>
+
+<td>${item.plan} Kg</td>
+
+<td>${item.actual} Kg</td>
+
+<td>${item.limbah} Kg</td>
+
+<td>${item.tujuan_pt || '-'}</td>
+
+<td>
+<span class="badge">
+${item.invoice || '-'}
+</span>
+</td>
+
+</tr>
+`;
+
+});
+
+}
+
 // ================= SUBMIT PRODUKSI =================
 
 async function submitProduksi(){
@@ -226,19 +403,19 @@ const bahan1 =
 document.getElementById('bahan1').value;
 
 const qty1 =
-Number(document.getElementById('qty1').value);
+Number(document.getElementById('qty1').value) || 0;
 
 const bahan2 =
 document.getElementById('bahan2').value;
 
 const qty2 =
-Number(document.getElementById('qty2').value);
+Number(document.getElementById('qty2').value) || 0;
 
 const bahan3 =
 document.getElementById('bahan3').value;
 
 const qty3 =
-Number(document.getElementById('qty3').value);
+Number(document.getElementById('qty3').value) || 0;
 
 const actual =
 Number(document.getElementById('actual').value);
@@ -256,8 +433,11 @@ if(
 !operator ||
 actual <= 0
 ){
+
 alert('Lengkapi data');
+
 return;
+
 }
 
 // ================= HITUNG =================
@@ -275,8 +455,6 @@ try{
 const res = await fetch(API_URL,{
 
 method:"POST",
-
-redirect:"follow",
 
 headers:{
 "Content-Type":"text/plain;charset=utf-8"
@@ -309,7 +487,8 @@ invoice
 
 });
 
-const result = await res.text();
+const result =
+await res.text();
 
 console.log(result);
 
@@ -339,8 +518,12 @@ alert('Gagal kirim ke Spreadsheet');
 
 }
 
-</script>
+// ================= LOAD AWAL =================
 
+loadStok();
+loadProduksi();
+
+</script>
 
 </body>
 </html>
